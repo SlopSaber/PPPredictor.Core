@@ -304,7 +304,8 @@ namespace PPPredictor.Core.Calculator
             if (_leaderboardInfo.HasPPToRankFunctionality)
             {
                 //Clear possible duplicates
-                mapPool.LsPlayerRankings = mapPool.LsPlayerRankings.Where(x => !playerscores.Select(y => y.Rank).Contains(x.Rank)).ToList();
+                var pageRanks = new HashSet<double>(playerscores.Select(y => y.Rank));
+                mapPool.LsPlayerRankings.RemoveAll(x => pageRanks.Contains(x.Rank));
             }
             mapPool.LsPlayerRankings.AddRange(playerscores);
             mapPool.LsPlayerRankings.Sort((score1, score2) => score1.Rank.CompareTo(score2.Rank)); //sort ascending
