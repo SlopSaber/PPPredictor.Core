@@ -1,5 +1,4 @@
-﻿
-using Newtonsoft.Json;
+
 using PPPredictor.Core.Interface;
 using System;
 using System.Diagnostics;
@@ -36,7 +35,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderEventList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderEventList>(result);
                 }
             }
             catch (Exception ex)
@@ -55,7 +54,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderSong>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderSong>(result);
                 }
             }
             catch (Exception ex)
@@ -74,7 +73,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderPlayer>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderPlayer>(result);
                 }
             }
             catch (Exception ex)
@@ -98,7 +97,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderPlayerScoreList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderPlayerScoreList>(result);
                 }
             }
             catch (Exception ex)
@@ -117,7 +116,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderPlayerList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderPlayerList>(result);
                 }
             }
             catch (Exception ex)
@@ -136,7 +135,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderPlayerList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderPlayerList>(result);
                 }
             }
             catch (Exception ex)
@@ -155,7 +154,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BeatLeaderPlayList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<BeatLeaderPlayList>(result);
                 }
             }
             catch (Exception ex)

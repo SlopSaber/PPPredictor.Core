@@ -1,10 +1,9 @@
-﻿using PPPredictor.Core.Interface;
+using PPPredictor.Core.Interface;
 using System;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using static PPPredictor.Core.DataType.LeaderBoard.AccSaberDataTypes;
 using System.Diagnostics.CodeAnalysis;
@@ -41,7 +40,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberScores>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberScores>>(result);
                 }
             }
             catch (Exception ex)
@@ -60,7 +59,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberScores>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberScores>>(result);
                 }
             }
             catch (Exception ex)
@@ -79,7 +78,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<AccSaberPlayer>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<AccSaberPlayer>(result);
                 }
             }
             catch (Exception ex)
@@ -98,7 +97,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberMapPool>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberMapPool>>(result);
                 }
             }
             catch (Exception ex)
@@ -117,7 +116,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberRankedMap>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberRankedMap>>(result);
                 }
             }
             catch (Exception ex)
@@ -136,7 +135,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberRankedMap>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberRankedMap>>(result);
                 }
             }
             catch (Exception ex)
@@ -155,7 +154,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<AccSaberPlayer>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<AccSaberPlayer>>(result);
                 }
             }
             catch (Exception ex)

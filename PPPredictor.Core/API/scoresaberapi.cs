@@ -1,4 +1,3 @@
-﻿using Newtonsoft.Json;
 using PPPredictor.Core.Interface;
 using System;
 using System.Diagnostics;
@@ -40,7 +39,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<ScoreSaberPlayerList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<ScoreSaberPlayerList>(result);
                 }
             }
             catch (Exception ex)
@@ -59,7 +58,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<ScoreSaberPlayer>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<ScoreSaberPlayer>(result);
                 }
             }
             catch (Exception ex)
@@ -78,7 +77,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<ScoreSaberPlayerScoreList>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<ScoreSaberPlayerScoreList>(result);
                 }
             }
             catch (Exception ex)

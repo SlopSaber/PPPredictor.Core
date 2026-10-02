@@ -1,5 +1,4 @@
-﻿
-using Newtonsoft.Json;
+
 using PPPredictor.Core.Interface;
 using System;
 using System.Collections.Generic;
@@ -38,7 +37,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqUserId>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqUserId>(result);
                 }
             }
             catch (Exception ex)
@@ -57,7 +56,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<HitBloqMapPool>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<HitBloqMapPool>>(result);
                 }
             }
             catch (Exception ex)
@@ -76,7 +75,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqMapPoolDetails>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqMapPoolDetails>(result);
                 }
                 }
             catch (Exception ex)
@@ -95,7 +94,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqUser>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqUser>(result);
                 }
             }
             catch (Exception ex)
@@ -114,7 +113,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<HitBloqScores>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<HitBloqScores>>(result);
                 }
             }
             catch (Exception ex)
@@ -133,7 +132,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<HitBloqScores>>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<List<HitBloqScores>>(result);
                 }
             }
             catch (Exception ex)
@@ -152,7 +151,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqLadder>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqLadder>(result);
                 }
             }
             catch (Exception ex)
@@ -171,7 +170,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqRankFromCr>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqRankFromCr>(result);
                 }
             }
             catch (Exception ex)
@@ -190,7 +189,7 @@ namespace PPPredictor.Core.API
                 if (response.IsSuccessStatusCode)
                 {
                     string result = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<HitBloqLeaderboardInfo>(result);
+                    return await ResponseJsonWorker.DeserializeAsync<HitBloqLeaderboardInfo>(result);
                 }
             }
             catch (Exception ex)
