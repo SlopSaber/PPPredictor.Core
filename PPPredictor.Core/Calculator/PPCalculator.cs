@@ -177,6 +177,10 @@ namespace PPPredictor.Core.Calculator
                 {
                     if (pp > 0)
                     {
+                        if (TryCalculateOwnedScoreGain(lsScores, mapSearchString, pp, currentTotalPP, mapPool, out OwnedGainResult gain))
+                        {
+                            return new PPGainResult(Math.Round(gain.Total, 2, MidpointRounding.AwayFromZero), Zeroizer(Math.Round(gain.Total - currentTotalPP, 2, MidpointRounding.AwayFromZero), 0.02), pp - gain.PreviousPP, _settings.PpGainCalculationType);
+                        }
                         double ppAfterPlay = 0;
                         int index = 1;
                         bool newPPadded = false;
@@ -228,6 +232,153 @@ namespace PPPredictor.Core.Calculator
                 Logging.ErrorPrint($"PPPredictor {_leaderboardInfo?.LeaderboardName} GetPlayerScorePPGain Error: {ex.Message}");
             }
             return new PPGainResult(currentTotalPP, pp, pp, _settings.PpGainCalculationType);
+        }
+
+        private bool TryCalculateOwnedScoreGain(List<ShortScore> scores, string search, double pp, double total, PPPMapPool pool, out OwnedGainResult result)
+        {
+            result = default;
+            int count = scores.Count;
+            var cache = pool.DctWeightLookup;
+            if (count < OwnedNumericWorker.MinimumCount || Thread.CurrentThread.IsThreadPoolThread || cache.Count < count)
+                return false;
+            for (int i = 0; i < OwnedNumericWorker.MinimumCount; i++)
+            {
+                ShortScore score = scores[i];
+                if (score == null || (score.Searchstring == search && pp <= score.Pp)) return false;
+            }
+
+            using (var scoreGeneration = scores.GetEnumerator())
+            using (var cacheGeneration = cache.GetEnumerator())
+            {
+                try
+                {
+                    var rows = new OwnedScore[count];
+                    int position = 0;
+                    foreach (ShortScore score in scores)
+                    {
+                        if (score == null || position == count) return false;
+                        rows[position++] = new OwnedScore(score.Searchstring, score.Pp);
+                    }
+                    if (position != count) return false;
+                    var weights = new double[count + 2];
+                    var cached = new bool[count + 2];
+                    for (int i = 1; i < weights.Length; i++)
+                        cached[i] = cache.TryGetValue(i, out weights[i]);
+
+                    result = OwnedNumericWorker.Run(ComputeOwnedScoreGain, new OwnedGainInput(rows, weights, cached, search, pp, total));
+                    if (!result.Completed || scores.Count != count) return false;
+                    scoreGeneration.MoveNext();
+                    cacheGeneration.MoveNext();
+                    for (int i = 0; i < count; i++)
+                    {
+                        ShortScore score = scores[i];
+                        if (score == null || score.Searchstring != rows[i].Search || !OwnedNumericWorker.SameBits(score.Pp, rows[i].PP))
+                            return false;
+                    }
+                    for (int i = 1; i < weights.Length; i++)
+                    {
+                        bool present = cache.TryGetValue(i, out double weight);
+                        if (present != cached[i] || (present && !OwnedNumericWorker.SameBits(weight, weights[i])))
+                            return false;
+                    }
+                    scoreGeneration.MoveNext();
+                    cacheGeneration.MoveNext();
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            }
+        }
+
+        private static OwnedGainResult ComputeOwnedScoreGain(object state)
+        {
+            var input = (OwnedGainInput)state;
+            double ppAfterPlay = 0;
+            int index = 1;
+            bool newPPadded = false;
+            bool newPPSkiped = false;
+            double previousPP = 0;
+            foreach (OwnedScore score in input.Scores)
+            {
+                if (!input.Cached[index]) return default;
+                double weightedPP = score.PP * input.Weights[index];
+                double weightedNewPP = input.PP * input.Weights[index];
+                if (score.Search == input.Search)
+                {
+                    previousPP = score.PP;
+                    if (input.PP <= previousPP)
+                    {
+                        ppAfterPlay = input.Total;
+                        break;
+                    }
+                    if (!newPPadded)
+                    {
+                        ppAfterPlay += Math.Max(weightedPP, weightedNewPP);
+                        newPPSkiped = true;
+                        index++;
+                    }
+                    continue;
+                }
+                if (!newPPadded && !newPPSkiped && weightedNewPP >= weightedPP)
+                {
+                    ppAfterPlay += weightedNewPP;
+                    newPPadded = true;
+                    index++;
+                    if (!input.Cached[index]) return default;
+                    weightedPP = score.PP * input.Weights[index];
+                }
+                ppAfterPlay += weightedPP;
+                index++;
+            }
+            return new OwnedGainResult(ppAfterPlay, previousPP);
+        }
+
+        private readonly struct OwnedScore
+        {
+            internal readonly string Search;
+            internal readonly double PP;
+
+            internal OwnedScore(string search, double pp)
+            {
+                Search = search;
+                PP = pp;
+            }
+        }
+
+        private sealed class OwnedGainInput
+        {
+            internal readonly OwnedScore[] Scores;
+            internal readonly double[] Weights;
+            internal readonly bool[] Cached;
+            internal readonly string Search;
+            internal readonly double PP;
+            internal readonly double Total;
+
+            internal OwnedGainInput(OwnedScore[] scores, double[] weights, bool[] cached, string search, double pp, double total)
+            {
+                Scores = scores;
+                Weights = weights;
+                Cached = cached;
+                Search = search;
+                PP = pp;
+                Total = total;
+            }
+        }
+
+        private readonly struct OwnedGainResult
+        {
+            internal readonly bool Completed;
+            internal readonly double Total;
+            internal readonly double PreviousPP;
+
+            internal OwnedGainResult(double total, double previousPP)
+            {
+                Completed = true;
+                Total = total;
+                PreviousPP = previousPP;
+            }
         }
 
         internal async Task<RankGainResult> GetPlayerRankGain(double pp, PPPMapPool mapPool)

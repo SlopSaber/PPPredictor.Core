@@ -3,6 +3,7 @@ using PPPredictor.Core.DataType;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 using static PPPredictor.Core.DataType.LeaderBoard.HitBloqDataTypes;
 using static PPPredictor.Core.DataType.Enums;
 
@@ -82,8 +83,15 @@ namespace PPPredictor.Core.DataType.Curve
             double percent = 100;
             if(curveType == CurveType.Linear && arrPPCurve.Count > 1)
             {
-                (double, double) peakMultiplier = arrPPCurve.Aggregate((i1, i2) => i1.Item2 > i2.Item2 ? i1 : i2);
-                percent = peakMultiplier.Item1 * 100;
+                if (TryCalculateOwnedCurve(0, true, out double peak))
+                {
+                    percent = peak * 100;
+                }
+                else
+                {
+                    (double, double) peakMultiplier = arrPPCurve.Aggregate((i1, i2) => i1.Item2 > i2.Item2 ? i1 : i2);
+                    percent = peakMultiplier.Item1 * 100;
+                }
             }
             return CalculatePPatPercentage(beatMapInfo, percent, false, false);
         }
@@ -108,6 +116,7 @@ namespace PPPredictor.Core.DataType.Curve
         {
             try
             {
+                if (TryCalculateOwnedCurve(percentage, false, out double multiplier)) return multiplier;
                 for (int i = 0; i < arrPPCurve.Count; i++)
                 {
                     if (arrPPCurve[i].Item1 == percentage)
@@ -128,6 +137,101 @@ namespace PPPredictor.Core.DataType.Curve
             {
                 Logging.ErrorPrint($"CustomPPPCurve CalculateMultiplierAtPercentage Error: {ex.Message}");
                 return -1;
+            }
+        }
+
+        private bool TryCalculateOwnedCurve(double percentage, bool maximum, out double value)
+        {
+            value = 0;
+            if (arrPPCurve == null || arrPPCurve.Count < OwnedNumericWorker.MinimumCount || Thread.CurrentThread.IsThreadPoolThread)
+                return false;
+            if (!maximum)
+            {
+                for (int i = 0; i < OwnedNumericWorker.MinimumCount; i++)
+                {
+                    if (arrPPCurve[i].Item1 == percentage || i + 1 == arrPPCurve.Count || arrPPCurve[i + 1].Item1 < percentage)
+                        return false;
+                }
+            }
+
+            using (var generation = arrPPCurve.GetEnumerator())
+            {
+                try
+                {
+                    var points = arrPPCurve.ToArray();
+                    if (points.Length < OwnedNumericWorker.MinimumCount) return false;
+                    var result = OwnedNumericWorker.Run(ComputeOwnedCurve, new OwnedCurveInput(points, percentage, maximum));
+                    if (!result.Completed || arrPPCurve.Count != points.Length) return false;
+                    generation.MoveNext();
+                    for (int i = 0; i < points.Length; i++)
+                    {
+                        var current = arrPPCurve[i];
+                        if (!OwnedNumericWorker.SameBits(current.Item1, points[i].Item1) || !OwnedNumericWorker.SameBits(current.Item2, points[i].Item2))
+                            return false;
+                    }
+                    generation.MoveNext();
+                    value = result.Value;
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            }
+        }
+
+        private static OwnedCurveResult ComputeOwnedCurve(object state)
+        {
+            var input = (OwnedCurveInput)state;
+            if (input.Maximum)
+            {
+                var peak = input.Points[0];
+                for (int i = 1; i < input.Points.Length; i++)
+                {
+                    var next = input.Points[i];
+                    if (!(peak.Item2 > next.Item2)) peak = next;
+                }
+                return new OwnedCurveResult(peak.Item1);
+            }
+            for (int i = 0; i < input.Points.Length; i++)
+            {
+                var current = input.Points[i];
+                if (current.Item1 == input.Percentage) return new OwnedCurveResult(current.Item2);
+                if (i + 1 == input.Points.Length) return default;
+                var next = input.Points[i + 1];
+                if (next.Item1 < input.Percentage)
+                {
+                    double m = (current.Item2 - next.Item2) / (current.Item1 - next.Item1);
+                    double b = next.Item2 - (m * next.Item1);
+                    return new OwnedCurveResult(m * input.Percentage + b);
+                }
+            }
+            return new OwnedCurveResult(0);
+        }
+
+        private sealed class OwnedCurveInput
+        {
+            internal readonly (double, double)[] Points;
+            internal readonly double Percentage;
+            internal readonly bool Maximum;
+
+            internal OwnedCurveInput((double, double)[] points, double percentage, bool maximum)
+            {
+                Points = points;
+                Percentage = percentage;
+                Maximum = maximum;
+            }
+        }
+
+        private readonly struct OwnedCurveResult
+        {
+            internal readonly bool Completed;
+            internal readonly double Value;
+
+            internal OwnedCurveResult(double value)
+            {
+                Completed = true;
+                Value = value;
             }
         }
 
